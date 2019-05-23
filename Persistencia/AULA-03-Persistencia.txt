@@ -1,0 +1,49 @@
+﻿adicionar dependecia via pacote na solution
+adicionar em todos projetos
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Text;
+
+namespace Persistencia
+{
+    class ContaDAL
+    {
+        //chamando a conexao
+        private SqlConnection  conn;
+        //para possiveis listagens de categoria
+        private Categoria categoria;
+
+
+        //criando um construtor, passando como parametro nossa conexao
+        public ContaDAL(SqlConnection conn)
+        {
+            this.conn = conn;
+            //utilizando a conexao
+            string strConn = Db.Conexao.GetStringConnection();
+            //instanciando a categoria
+            this.categoria = new Categoria(new SqlConnection(strConn));
+        }
+    }
+}
+
+
+
+using System;
+using System.Data.SqlClient;
+
+namespace Persistencia
+{
+    public class Categoria
+    {
+        //chamando a conexao
+        private SqlConnection conn;
+        //criando um construtor, passando como parametro nossa conexao
+        public Categoria(SqlConnection conn)
+        {
+            this.conn = conn;
+        }
+    }
+}

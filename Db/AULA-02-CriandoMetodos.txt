@@ -1,0 +1,2 @@
+﻿renomeia a class 1 para conexao e criar uma classe statica para ser acessada o metodo de qualquer lugar
+1criando uma string de conexao

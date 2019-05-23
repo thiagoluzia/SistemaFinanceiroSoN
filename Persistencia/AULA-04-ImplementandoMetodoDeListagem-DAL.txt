@@ -1,0 +1,106 @@
+﻿using System;
+using System.Data.SqlClient;
+using CategoriaModelo = Modelo.Categoria;//renomeamos a classe somente para o uso, pois nesse caso vamos usar a Classe categira de modelo e nao da persistencia
+
+namespace Persistencia
+{
+    public class Categoria
+    {
+        //chamando a conexao
+        private SqlConnection conn;
+        //criando um construtor, passando como parametro nossa conexao
+        public Categoria(SqlConnection conn)
+        {
+            this.conn = conn;
+        }
+
+        //criando um metodo para buscar a categoria pelo id para usar na listagem de contas
+        public CategoriaModelo GetCategoria(int id)
+        {
+            CategoriaModelo categoria = new CategoriaModelo();
+            var command = new SqlCommand("select id, nome from categoria where id = @id", this.conn);
+            //passando por atributo a variavel que vem do metodo 
+            command.Parameters.AddWithValue("@id", id);
+            //abrir conexao
+            this.conn.Open();
+            //fazer a leitura com sql datareader
+
+            using (SqlDataReader rd = command.ExecuteReader())
+            {
+                //vai ler o registro
+                rd.Read();
+                categoria.Id = Convert.ToInt32(rd["id"].ToString());
+                categoria.Nome = rd["nome"].ToString();
+            }
+            this.conn.Close();
+            return categoria;
+        }
+    }
+}
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Text;
+using Modelo;
+
+namespace Persistencia
+{
+    class ContaDAL
+    {
+        //chamando a conexao
+        private SqlConnection  conn;
+        //para possiveis listagens de categoria
+        private Categoria categoria;
+
+
+        //criando um construtor, passando como parametro nossa conexao
+        public ContaDAL(SqlConnection conn)
+        {
+            this.conn = conn;
+            //utilizando a conexao
+            string strConn = Db.Conexao.GetStringConnection();
+            //instanciando a categoria
+            this.categoria = new Categoria(new SqlConnection(strConn));
+        }
+
+        //criando um metodo public para retornar uma lista de conta modelo(devemos importa o namespace de conta modelo, e classe modelo tem que ser publica)
+        public List<Conta> ListarTodos()
+        {
+            //objeto do tipo list, contas
+            List<Conta> contas = new List<Conta>() ;
+
+            //efetuando uma consulta, con=conta, cat=categoria
+            var command = new SqlCommand("select con.id, con.descricao, con.valor, con.tipo, con.data_vencimento, cat.nome, cat.id as categoria_id from contas con inner join categorias cat on con.categoria_id = cat.id", this.conn);
+            //abrir conexao
+            this.conn.Open();
+            //fazer a leitura com sql datareader
+
+            using(SqlDataReader rd = command.ExecuteReader())
+            {
+                //quando ele encontrar ele vai executar, read ler um dado e passa para o proximo, enqunto isso ele verdadeiro, quando nao encontar mais dados ele se torna falso e sai do laço
+                while (rd.Read())
+                {
+                    Conta conta = new Conta()
+                    {
+                        //atribuindo valores a nossas classes
+                        Id = Convert.ToInt32(rd["id"].ToString()),
+                        Descricao = rd["descricao"].ToString(),
+                        Tipo = Convert.ToChar(rd["tipo"].ToString()),
+                        Valor = Convert.ToDouble(rd["valor"].ToString())
+                    };
+
+                    //atribuindo para o conta a categoria, pegando o id que vem do banco de dados
+                    int id_categoria = Convert.ToInt32(rd["id"].ToString());
+                    conta.Categoria = this.categoria.GetCategoria(id_categoria);
+                    //adicionando a contas
+                    contas.Add(conta);
+                }
+            }
+            return contas;
+        }
+    }
+}
